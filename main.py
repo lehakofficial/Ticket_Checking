@@ -4,7 +4,7 @@ import os
 
 
 def rename(old_name):
-    file = open(old_name, 'rb')
+    file = open('tickets to rename/' + old_name, 'rb')
     pdfReader = PyPDF2.PdfFileReader(file)
     pageObj = pdfReader.getPage(0)
     data0 = pageObj.extractText().split(sep='\n')
@@ -14,13 +14,13 @@ def rename(old_name):
         data = pageObj.extractText().split(sep='\n')[22]
     else:
         data = pageObj.extractText().split(sep='\n')[21]
-    new_name = data + '.pdf'
+    new_name = 'renamed tickets/' + data + '.pdf'
     file.close()
-    os.rename(old_name, new_name)
+    os.rename('tickets to rename/' + old_name, new_name)
 
 
 def renamer():
-    name_lst = os.listdir()
+    name_lst = os.listdir('tickets to rename/')
     for i in name_lst:
         rename(i)
 
@@ -73,15 +73,24 @@ def grand(data):
 
 
 def red_arrow(data):
-    # то же самое, что мегаполис
-    passport_birth = data[20].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
+    """
+    Для поезда 233 в 01:05 тоже работает
+    """
+
+    passport_birth = data[20].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][3:].split(sep=' ')
     passport = passport_birth[0]
     date_of_birth = passport_birth[1]
     male = passport_birth[3]
     full_name = data[21].split(sep=' ')
-    surname = full_name[0]
-    name = full_name[1][0]
-    second_name = full_name[2][0]
+    if len(full_name) > 3:
+        surname = full_name[0]
+        name = full_name[1]
+        second_name = full_name[-1]
+    else:
+        surname = full_name[0]
+        name = full_name[-1]
+        length = int(len(data[22])/2)
+        second_name = data[22][:-int(len(data[22])/2)]
 
     return surname, name, second_name, passport, date_of_birth, male
 
@@ -106,38 +115,49 @@ def megapolis(data):
 
 
 def sapsan(data):
-    # date_full = data[5][5:-3].split(sep=' ')
-    # date_arrive = date_full[1]
-    # time_arrive = date_full[0]
-    # start = data[9].split(sep=' ')[2]
-    # arrive = data[18][14:-29]
-    if data[3] == 'САПСАН Сидячий' and data[4] == '("ЭКОНОМ")Для пассажиров с':
-        passport_birth = data[22].split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
-        passport = passport_birth[0]
-        date_of_birth = passport_birth[1]
-        male = passport_birth[3]
-        full_name = data[23].split(sep=' ')
+    # if data[3] == 'САПСАН Сидячий' and data[4] == '("ЭКОНОМ")Для пассажиров с':
+    #     passport_birth = data[22].split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
+    #     passport = passport_birth[0]
+    #     date_of_birth = passport_birth[1]
+    #     male = passport_birth[3]
+    #     full_name = data[23].split(sep=' ')
+    #     surname = full_name[0]
+    #     name = full_name[1][0]
+    #     second_name = full_name[2][0]
+    # elif data[3] == 'САПСАН Сидячий':
+    passport_birth = data[21].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][3:].split(sep=' ')
+    passport = passport_birth[0]
+    date_of_birth = passport_birth[1]
+    male = passport_birth[3]
+    full_name = data[22].split(sep=' ')
+    if len(full_name) > 3:
         surname = full_name[0]
-        name = full_name[1][0]
-        second_name = full_name[2][0]
-    elif data[3] == 'САПСАН Сидячий':
-        passport_birth = data[21].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
-        passport = passport_birth[0]
-        date_of_birth = passport_birth[1]
-        male = passport_birth[3]
-        full_name = data[22].split(sep=' ')
+        name = full_name[1]
+        second_name = full_name[-1]
+    else:
         surname = full_name[0]
-        name = full_name[1][0]
-        second_name = full_name[2][0]
+        name = full_name[-1]
+        second_name = data[23][:-int(len(data[23])/2)]
     return surname, name, second_name, passport, date_of_birth, male
 
 
-def get_ticket_info(file_name):
-    file = open(file_name, 'rb')
-    pdfReader = PyPDF2.PdfFileReader(file)
+def grand_by_rgd(data):
+    passport = data[7].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ')
+    date_of_birth = data[8][:10]
+    male = data[8][-1]
+    full_name = data[6].split(sep=' ')
+    surname = full_name[0]
+    name = full_name[1][0]
+    second_name = full_name[2][0]
 
-    pageObj = pdfReader.getPage(0)
-    data = pageObj.extractText().split(sep='\n')
+    return surname, name, second_name, passport, date_of_birth, male
+
+
+def get_ticket_info_old(file_name):
+    file = open(file_name, 'rb')
+    pdf_reader = PyPDF2.PdfFileReader(file)
+    page_obj = pdf_reader.getPage(0)
+    data = page_obj.extractText().split(sep='\n')
     file.close()
     train = data[3].split(sep=' ')[0]
     if train == 'САПСАН':
@@ -149,7 +169,8 @@ def get_ticket_info(file_name):
     elif (train == 'Купе' or train[:2] == 'СВ') and data[9] == 'ЛадожскийЛадожский':
         ticket_info = two_floor(data=data)
     elif train == 'Год':
-        ticket_info = grand(data=data)
+        ticket_info = grand_by_rgd(data=data)
+        # ticket_info = grand(data=data)
     elif train == 'ВАГОН' and data[11] == 'СВ':
         ticket_info = double_cv(data=data)
     elif train == 'ВАГОН' and data[11] == 'САПСАН':
@@ -157,6 +178,24 @@ def get_ticket_info(file_name):
     else:
         ticket_info = 'cringe'
         print(f'{file_name} кринж')
+
+    return ticket_info
+
+
+def get_ticket_info(file_name):
+    file = open(file_name, 'rb')
+    pdf_reader = PyPDF2.PdfFileReader(file)
+    page_obj = pdf_reader.getPage(0)
+    data = page_obj.extractText().split(sep='\n')
+    file.close()
+    train = data[3].split(sep=' ')[0]
+    if train == 'Купе':
+        ticket_info = red_arrow(data=data)
+    elif train == 'САПСАН':
+        ticket_info = sapsan(data=data)
+    else:
+        ticket_info = 'cringe'
+        print(f'Не найден поезд для {file_name}')
 
     return ticket_info
 
@@ -194,29 +233,38 @@ def ticket_checker(data_base: str):
         flag = False
 
         for j in base:
-            a = j[0].upper()
-            b = ticket[0]
-            if j[0].upper() == ticket[0]:
+            surname_from_base = j[0].upper()
+            name_from_base = j[1].upper()
+            second_name_from_base = j[2].upper()
+            passport_from_base = j[3]
+            date_of_birth_from_base = j[4]
+
+            surname_from_ticket = ticket[0]
+            name_from_ticket = ticket[1]
+            second_name_from_ticket = ticket[2]
+            passport_from_ticket = ticket[3]
+            date_of_birth_from_ticket = ticket[4]
+            male_from_ticket = ticket[5]
+
+            if surname_from_base == surname_from_ticket:
                 print(f'{j[0]} match')
                 if j[0].upper() == ticket[0]:
                     pass
                 else:
                     print(f'Ошибка в фамилии {j[0]}')
-                if j[1][0] == ticket[1]:
+                if name_from_base == name_from_ticket:
                     pass
                 else:
                     print(f'Ошибка в имени {j[0]}')
-                if j[2][0] == ticket[2]:
+                if second_name_from_base == second_name_from_ticket:
                     pass
                 else:
                     print(f'Ошибка в отчестве {j[0]}')
-                if j[3][-4:] == ticket[3][-4:]:
+                if passport_from_base == passport_from_ticket:
                     pass
                 else:
                     print(f'Ошибка в паспорте {j[0]}')
-                a = j[4][:]
-                b = ticket[4]
-                if j[4][:] == ticket[4]:
+                if date_of_birth_from_base == date_of_birth_from_ticket:
                     pass
                 else:
                     print(f'Ошибка в дате рождения {j[0]}')
@@ -233,4 +281,4 @@ def ticket_checker(data_base: str):
     print(f'Проверено {counter} людей')
 
 
-ticket_checker('Остров заблудших душ')
+ticket_checker('Список_6 января 2023csv')

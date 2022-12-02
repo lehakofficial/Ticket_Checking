@@ -10,21 +10,21 @@
 
 year = '2022'
 tutor = 'Жабко Г.П.'
-student = 'Серов Е.Д.'
-group = '4941102/10701'
-variant = '44'
+student = 'Кулик Д.Д.'
+group = '4941101/10301'
+variant = '8'
 
-f = 10.5e9
+f = 9e9
 
-angleOfIncidence = 30
+angleOfIncidence = 70
 
-firstMaterial = 'поликор'
-secondMaterial = 'медь'
-thirdMaterial = 'полиэтилен'
+firstMaterial = 'медь'
+secondMaterial = 'поликор'
+thirdMaterial = 'железо'
 
-d1 = 2e-3
-d2 = 1e-6
-d3 = 1e-3
+d1 = 0.3e-6
+d2 = 1e-3
+d3 = 0.1e-6
 
 polarization = 'паралл'
 
@@ -68,7 +68,7 @@ title = r'''
 \begin{minipage}{0.25\textwidth} % врезка в половину ширины текста
 \begin{flushleft} % выровнять её содержимое по левому краю
 
-\large\textbf{Работу выполнил:}\\
+\large\textbf{Работу выполнила:}\\
 \large''' + student + r'''\\
 \large {Группа:} \\
 \large''' + group + r'''
@@ -436,4 +436,4 @@ with doc.create(pylatex.Section('Расчёты:')):
         enum.add_item(materials[int(AForChoice.get(max(AForChoice))[1]) - 1])
         enum.add_item(materials[int(AForChoice.get(max(AForChoice))[2]) - 1])
 
-doc.generate_tex('reportSerovV44')
+doc.generate_tex('reportKulikV8')
