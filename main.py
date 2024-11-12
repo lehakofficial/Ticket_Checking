@@ -2,8 +2,6 @@ import PyPDF2
 import numpy as np
 import os
 
-from pyasn1.codec.ber.decoder import decode
-
 
 def rename(old_name):
     file = open('tickets to rename/' + old_name, 'rb')
@@ -27,169 +25,58 @@ def renamer():
         rename(i)
 
 
-def sapsan_non_econom(data):
-    passport = data[55].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep=' ')[2]
-    date_of_birth = data[56][:-1]
-    male = data[58]
-    surname = data[59]
-    name = data[61][0]
-    second_name = data[63][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def double_cv(data):
-    passport = data[53].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep=' ')[2]
-    date_of_birth = data[54][:-1]
-    male = data[56]
-    surname = data[57]
-    name = data[59][0]
-    second_name = data[61][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def two_floor(data):
-    passport_birth = data[19].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
-    passport = passport_birth[0]
-    date_of_birth = passport_birth[1]
-    male = passport_birth[3]
-    full_name = data[20].split(sep=' ')
-    surname = full_name[0]
-    name = full_name[1][0]
-    second_name = full_name[2][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def grand(data):
-    passport = data[5].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ')
-    date_of_birth = data[6][:10]
-    male = data[6][-1]
-    full_name = data[4][5:].split(sep=' ')
-    surname = full_name[0]
-    name = full_name[1][0]
-    second_name = full_name[2][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def red_arrow(data):
-    """
-    Для поезда 233 в 01:05 тоже работает
-    """
-
-    passport_birth = data[20].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][3:].split(sep=' ')
-    passport = passport_birth[0]
-    date_of_birth = passport_birth[1]
-    male = passport_birth[3]
-    full_name = data[21].split(sep=' ')
-    if len(full_name) > 3:
-        surname = full_name[0]
-        name = full_name[1]
-        second_name = full_name[-1]
+def parse_sapsan_ticket(ticket_data: list) -> tuple:
+    if ticket_data[4].find("БИЗНЕС") != -1 or ticket_data[4].find("ПЕРВЫЙ") != -1:
+        passport_number, date_of_birth = ticket_data[20].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
+        second_name = ticket_data[22]
+        try:
+            surname, name = ticket_data[21].split(sep=" ")
+        except ValueError:
+            surname = name = ticket_data[21]
+        male = ticket_data[20][-1]
     else:
-        surname = full_name[0]
-        name = full_name[-1]
-        length = int(len(data[22])/2)
-        second_name = data[22][:-int(len(data[22])/2)]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def megapolis(data):
-
-    # date_full = data[4][5:-3].split(sep=' ')
-    # date_arrive = date_full[1]
-    # time_arrive = date_full[0]
-    # start = data[8][14:-16]
-    # arrive = data[17][14:-29]
-    passport_birth = data[20].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
-    passport = passport_birth[0]
-    date_of_birth = passport_birth[1]
-    male = passport_birth[3]
-    full_name = data[21].split(sep=' ')
-    surname = full_name[0]
-    name = full_name[1][0]
-    second_name = full_name[2][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
-
-
-def parse_sapsan_econom_ticket(ticket_data: list) -> tuple:
-    # if data[3] == 'САПСАН Сидячий' and data[4] == '("ЭКОНОМ")Для пассажиров с':
-    #     passport_birth = data[22].split(sep='ПАСПОРТ ')[1][4:].split(sep=' ')
-    #     passport = passport_birth[0]
-    #     date_of_birth = passport_birth[1]
-    #     male = passport_birth[3]
-    #     full_name = data[23].split(sep=' ')
-    #     surname = full_name[0]
-    #     name = full_name[1][0]
-    #     second_name = full_name[2][0]
-    # elif data[3] == 'САПСАН Сидячий':
-    date_of_birth = ticket_data[21].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ').split(sep='ПАСПОРТ ')[1][3:].split(sep=' ')
-    passport_number = date_of_birth[0]
-    date_of_birth = date_of_birth[1]
-    male = date_of_birth[3]
-    full_name = ticket_data[22].split(sep=' ')
-    if len(full_name) > 3:
-        surname = full_name[0]
-        name = full_name[1]
-        second_name = full_name[-1]
-    else:
-        surname = full_name[0]
-        name = full_name[-1]
-        second_name = ticket_data[23][:-int(len(ticket_data[23])/2)]
+        passport_number, date_of_birth = ticket_data[20].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
+        second_name = ticket_data[22]
+        surname = name = ticket_data[21]
+        male = ticket_data[20][-1]
     return surname, name, second_name, passport_number, date_of_birth, male
 
 
-def parse_sapsan_business_ticket(ticket_data: list) -> tuple:
-    passport_number, date_of_birth = ticket_data[20].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
-    second_name = ticket_data[22]
-    surname, name = ticket_data[21].split(sep=" ")
-    male = ticket_data[20][-1]
+def parse_megapolis_ticket(ticket_data: list) -> tuple:
+    surname = name = ticket_data[20]
+    second_name = ticket_data[21]
+    passport_number, date_of_birth = ticket_data[19].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
+    male = ticket_data[19][-1]
     return surname, name, second_name, passport_number, date_of_birth, male
 
 
-def grand_by_rgd(data):
-    passport = data[7].replace('СВИДЕТЕЛЬСТВО О РОЖДЕНИИ', 'ПАСПОРТ')
-    date_of_birth = data[8][:10]
-    male = data[8][-1]
-    full_name = data[6].split(sep=' ')
-    surname = full_name[0]
-    name = full_name[1][0]
-    second_name = full_name[2][0]
-
-    return surname, name, second_name, passport, date_of_birth, male
+def parse_grand_ticket(ticket_data: list) -> tuple:
+    surname, name, second_name = ticket_data[6].replace(".", "").split(sep=" ")
+    passport_number, date_of_birth = ticket_data[7].split(sep=" / ")[:2]
+    male = ticket_data[7][-1]
+    return surname, name, second_name, passport_number, date_of_birth, male
 
 
-def get_ticket_info_old(file_name):
-    file = open(file_name, 'rb')
-    pdf_reader = PyPDF2.PdfFileReader(file)
-    page_obj = pdf_reader.getPage(0)
-    data = page_obj.extractText().split(sep='\n')
-    file.close()
-    train = data[3].split(sep=' ')[0]
-    if train == 'САПСАН':
-        ticket_info = parse_sapsan_econom_ticket(ticket_data=data)
-    elif train == 'МЕГАПОЛИС':
-        ticket_info = megapolis(data=data)
-    elif (train == 'Купе' or train[:2] == 'СВ') and data[9] == 'ГлавныйГлавный':
-        ticket_info = red_arrow(data=data)
-    elif (train == 'Купе' or train[:2] == 'СВ') and data[9] == 'ЛадожскийЛадожский':
-        ticket_info = two_floor(data=data)
-    elif train == 'Год':
-        ticket_info = grand_by_rgd(data=data)
-        # ticket_info = grand(data=data)
-    elif train == 'ВАГОН' and data[11] == 'СВ':
-        ticket_info = double_cv(data=data)
-    elif train == 'ВАГОН' and data[11] == 'САПСАН':
-        ticket_info = sapsan_non_econom(data=data)
-    else:
-        ticket_info = 'cringe'
-        print(f'{file_name} кринж')
+def parse_red_arrow_ticket(ticket_data: list) -> tuple:
+    try:
+       surname, name = ticket_data[20].split(sep=" ")
+    except ValueError:
+        surname = name = ticket_data[20]
+    second_name = ticket_data[21]
+    passport_number, date_of_birth = ticket_data[19].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
+    male = ticket_data[19][-1]
+    return surname, name, second_name, passport_number, date_of_birth, male
 
-    return ticket_info
+
+def parse_night_express_ticket(ticket_data: list) -> tuple:
+    try:
+       surname, name = ticket_data[20].split(sep=" ")
+    except ValueError:
+        surname = name = ticket_data[20]
+    second_name = ticket_data[21]
+    passport_number, date_of_birth = ticket_data[19].split(sep="ПАСПОРТРФ")[1].split(sep=" ")[:-1]
+    male = ticket_data[19][-1]
+    return surname, name, second_name, passport_number, date_of_birth, male
 
 
 def get_ticket_info(file_name):
@@ -199,13 +86,16 @@ def get_ticket_info(file_name):
     ticket_data = page_obj.extractText().split(sep='\n')
     file.close()
     train = ticket_data[3].split(sep=' ')[0]
-    if train == 'Купе':
-        ticket_info = red_arrow(data=ticket_data)
-    elif train == "САПСАН" and ticket_data[4].find("БИЗНЕС"):
-        ticket_info = parse_sapsan_business_ticket(ticket_data=ticket_data)
+    if train == 'Купе' or train == "СВ":
+        ticket_info = parse_red_arrow_ticket(ticket_data=ticket_data)
     elif train == "САПСАН":
-        ticket_info = parse_sapsan_econom_ticket(ticket_data=ticket_data)
-
+        ticket_info = parse_sapsan_ticket(ticket_data=ticket_data)
+    elif train == "МЕГАПОЛИС":
+        ticket_info = parse_megapolis_ticket(ticket_data=ticket_data)
+    elif train == "receipt":
+        ticket_info = parse_grand_ticket(ticket_data=ticket_data)
+    elif train == "Ночнойэкспресс":
+        ticket_info = parse_night_express_ticket(ticket_data=ticket_data)
 
     else:
         ticket_info = 'cringe'
@@ -251,42 +141,36 @@ def check_tickets(data_base_path: str, tickets_path: str):
         ticket = get_ticket_info(f"{tickets_path}/{ticket_file}")
         flag = False
 
-        for j in passports_base:
-            surname_from_base = j[0].upper()
-            name_from_base = j[1].upper()
-            second_name_from_base = j[2].upper()
-            passport_from_base = j[3]
-            date_of_birth_from_base = j[4]
+        (surname_from_ticket, name_from_ticket, second_name_from_ticket,
+         passport_from_ticket, date_of_birth_from_ticket, male) = ticket
 
-            surname_from_ticket = ticket[0]
-            name_from_ticket = ticket[1]
-            second_name_from_ticket = ticket[2]
-            passport_from_ticket = ticket[3]
-            date_of_birth_from_ticket = ticket[4]
-            male_from_ticket = ticket[5]
+        for passenger in passports_base:
+            surname_from_base = passenger[0].upper()
+            name_from_base = passenger[1].upper()
+            second_name_from_base = passenger[2].upper()
+            passport_from_base = passenger[3]
+            date_of_birth_from_base = passenger[4]
 
-            if surname_from_base == surname_from_ticket:
-                print(f'{j[0]} match')
-                if j[0].upper() == ticket[0]:
-                    pass
-                else:
-                    print(f'Ошибка в фамилии {j[0]}')
-                if name_from_base == name_from_ticket:
-                    pass
-                else:
-                    print(f'Ошибка в имени {j[0]}')
-                if second_name_from_base == second_name_from_ticket:
-                    pass
-                else:
-                    print(f'Ошибка в отчестве {j[0]}')
-                if passport_from_base == passport_from_ticket:
-                    pass
-                else:
-                    print(f'Ошибка в паспорте {j[0]}')
-                if date_of_birth_from_base == date_of_birth_from_ticket:
-                    pass
-                else:
-                    print(f'Ошибка в дате рождения {j[0]}')
+            if surname_from_ticket.find(surname_from_base) != -1:
+                print(f'{surname_from_base} match')
+
+                if surname_from_ticket.find(surname_from_base) == -1:
+                    print(f'Ошибка в фамилии {surname_from_base}')
+                if (name_from_base != name_from_ticket and
+                        (len(name_from_ticket) == 1 and name_from_base[0] != name_from_ticket[0])
+                ):
+                    print(f'Ошибка в имени {surname_from_base}')
+                if (second_name_from_ticket.find(second_name_from_base) == -1 and
+                        (len(second_name_from_ticket) == 1 and second_name_from_base[0] != second_name_from_ticket[0])
+                ):
+                    print(f'Ошибка в отчестве {surname_from_base}')
+                if (passport_from_base != passport_from_ticket and
+                        passport_from_base[-4:] != passport_from_ticket[-4:]
+                ):
+                    print(f'Ошибка в паспорте {surname_from_base}')
+                if not date_of_birth_from_base == date_of_birth_from_ticket:
+                    print(f'Ошибка в дате рождения {surname_from_base}')
+
                 flag = True
                 counter += 1
                 break
@@ -300,5 +184,5 @@ def check_tickets(data_base_path: str, tickets_path: str):
     print(f'Проверено {counter} людей')
 
 
-check_tickets("Дядя Ваня", "Мск")
+check_tickets("Дядя Ваня", "Спб")
 
